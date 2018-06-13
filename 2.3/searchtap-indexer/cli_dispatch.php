@@ -1,4 +1,5 @@
 <?php
+
 // CLI must be called by cli php
 if (php_sapi_name() != 'cli') {
     syslog(LOG_ERR, "cli $cli_action call attempted by non-cli.");
@@ -15,21 +16,22 @@ if (!isset($cli_action)) {
 }
 
 // Handle errors by writing to log
-function cli_error_handler($log_level, $log_text, $error_file, $error_line) {
+function cli_error_handler($log_level, $log_text, $error_file, $error_line)
+{
     syslog(LOG_ERR, 'CLI Error: ' . $log_text . ' in ' . $error_file . ': ' . $error_line);
-    echo 'CLI Error: ' . $log_text . ' in ' . $error_file . ': ' . $error_line;
+    //echo 'CLI Error: ' . $log_text . ' in ' . $error_file . ': ' . $error_line;
 }
+
 set_error_handler('cli_error_handler');
 
-// Configuration (note we're using the admin config)
-require_once __DIR__.('/../admin/config.php');
+// Configuration (note we're using the admin7862462 config)
+require_once __DIR__ . ('/../admin7862462/config.php');
 
 
 // Configuration not present in CLI (vs web)
-chdir(__DIR__.'/../admin');
-set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__)) . '../admin/');
+chdir(__DIR__ . '/../admin7862462');
+set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__)) . '../admin7862462/');
 $_SERVER['HTTP_HOST'] = '';
-
 
 
 if (!defined('DIR_APPLICATION')) {
@@ -51,12 +53,6 @@ if (!defined('DIR_APPLICATION')) {
     header('Location: ../install/index.php');
     exit;
 }
-
-////VirtualQMOD
-//require_once('../vqmod/vqmod.php');
-//VQMod::bootup();
-
 // VQMODDED Startup
-require_once __DIR__.('/../system/startup.php');
-
+require_once __DIR__ . ('/../system/startup.php');
 start('cli');

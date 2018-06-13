@@ -1,4 +1,5 @@
 <?php
+
 // Site
 $_['site_base']         = HTTP_SERVER;
 $_['site_ssl']          = HTTPS_SERVER;
@@ -30,7 +31,10 @@ $_['action_pre_action'] = array(
 );
 
 // Actions
-$_['action_default'] = 'extension/module/searchtap/cronIndexer';
+if(ST_INDEXER == 1)
+    $_['action_default'] = 'extension/module/searchtap/cronFullIndexer';
+else if(ST_INDEXER == 2)
+    $_['action_default'] = 'extension/module/searchtap/cronIndexer';
 
 // Action Events
 $_['action_event'] = array(
