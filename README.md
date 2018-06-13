@@ -7,7 +7,7 @@ In order to run the indexer, please use the following commands:
 
 Description of gs_searchtap table
 
-product_id - Product Id to be indexed or delete
-last_updated_at - date and time when the product is added/removed from the database
-last_indexed_at - Initially null and the plugin will automatically update this field after indexing
-status - can be a string either "index" or "delete"
+- product_id - Product Id to be indexed or delete
+- last_updated_at - date and time when the product is added/removed from the database
+- last_indexed_at - Initially null and the plugin will automatically update this field after indexing
+- status - can be a string either "index" or "delete"
