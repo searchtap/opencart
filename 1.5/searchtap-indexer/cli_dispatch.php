@@ -1,5 +1,55 @@
 <?php
 
+
+function config() {
+// HTTP
+//    $dir_path=getcwd();
+
+$dir_path="/var/www/html/current";
+    $server_host = str_replace("www.", "", $_SERVER['SERVER_NAME']);
+
+        $url = "https://".$_SERVER['HTTP_HOST']."/current/";
+//        $raw_dir_path=getcwd();
+    $raw_dir_path = "/var/www/html/current";
+        $chunk = explode("/",$raw_dir_path);
+        unset($chunk[count($chunk)-1]);
+        $dir_path = implode("/",$chunk);
+
+    $dir_path="/var/www/html/current";
+
+    /* HTTP */
+    define('HTTP_SERVER', $url.'mothership/');
+    define('HTTP_CATALOG', $url);
+
+    /* HTTPS */
+    define('HTTPS_SERVER', $url.'mothership/');
+    define('HTTPS_CATALOG', $url);
+
+    /* DIR */
+    define('DIR_APPLICATION', $dir_path.'/mothership/');
+    define('DIR_SYSTEM', $dir_path.'/system/');
+    define('DIR_DATABASE', $dir_path.'/system/database/');
+    define('DIR_LANGUAGE', $dir_path.'/mothership/language/');
+    define('DIR_TEMPLATE', $dir_path.'/mothership/view/template/');
+    define('DIR_CONFIG', $dir_path.'/system/config/');
+    define('DIR_IMAGE', $dir_path.'/image/');
+    define('DIR_CACHE', $dir_path.'/system/cache/');
+    define('DIR_DOWNLOAD', $dir_path.'/download/');
+    define('DIR_LOGS', $dir_path.'/system/logs/');
+    define('DIR_CATALOG', $dir_path.'/catalog/');
+
+    /* DB */
+        define('DB_DRIVER', 'mysqli');
+        define('DB_HOSTNAME', 'localhost');
+        define('DB_USERNAME', 'anirudd_funky');
+        define('DB_PASSWORD', 'AVPBFtbjNuBheNQx');
+        define('DB_DATABASE', 'anirudd_funky');
+        define('DB_PREFIX', 'oc_');
+
+}
+
+
+
 // CLI must be called by cli php
 if (php_sapi_name() != 'cli') {
     syslog(LOG_ERR, "cli $cli_action call attempted by non-cli.");
@@ -18,21 +68,22 @@ if (!isset($cli_action)) {
 // Handle errors by writing to log
 function cli_error_handler($log_level, $log_text, $error_file, $error_line) {
     syslog(LOG_ERR, 'CLI Error: ' . $log_text . ' in ' . $error_file . ': ' . $error_line);
-    echo 'CLI Error: ' . $log_text . ' in ' . $error_file . ': ' . $error_line;
+  //  echo 'CLI Error: ' . $log_text . ' in ' . $error_file . ': ' . $error_line;
 }
 set_error_handler('cli_error_handler');
 
 // Configuration not present in CLI (vs web)
-chdir(__DIR__.'/../admin');
-set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__)) . '../admin/');
+chdir(__DIR__.'/../mothership');
+set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__)) . '../mothership/');
 $_SERVER['HTTP_HOST'] = '';
 
 // Version
 define('VERSION', '1.5.1');
 
 // Configuration (note we're using the admin config)
-require_once('../admin/config.php');
+//require_once('../admin/config.php');
 
+config();
 // Configuration check
 if (!defined('DIR_APPLICATION')) {
     echo "ERROR: cli $cli_action call missing configuration.";
@@ -41,14 +92,38 @@ if (!defined('DIR_APPLICATION')) {
     exit;
 }
 
-// Startup
-require_once(DIR_SYSTEM . 'startup.php');
+//// Startup
+//require_once(DIR_SYSTEM . 'startup.php');
+//
+//// Application Classes
+//require_once(DIR_SYSTEM . 'library/currency.php');
+//require_once(DIR_SYSTEM . 'library/user.php');
+//require_once(DIR_SYSTEM . 'library/weight.php');
+//require_once(DIR_SYSTEM . 'library/length.php');
+
+
+
+//VirtualQMOD
+require_once('../vqmod/vqmod.php');
+VQMod::bootup();
+
+// VQMODDED Startup
+require_once(DIR_SYSTEM . 'startup_admin.php');
 
 // Application Classes
-require_once(DIR_SYSTEM . 'library/currency.php');
-require_once(DIR_SYSTEM . 'library/user.php');
-require_once(DIR_SYSTEM . 'library/weight.php');
-require_once(DIR_SYSTEM . 'library/length.php');
+require_once(VQMod::modCheck(DIR_SYSTEM . 'library/currency.php'));
+require_once(VQMod::modCheck(DIR_SYSTEM . 'library/user.php'));
+require_once(VQMod::modCheck(DIR_SYSTEM . 'library/weight.php'));
+require_once(VQMod::modCheck(DIR_SYSTEM . 'library/length.php'));
+
+require_once(VQMod::modCheck(DIR_SYSTEM . 'engine/controller.php'));
+require_once(VQMod::modCheck(DIR_SYSTEM . 'engine/front.php'));
+require_once(VQMod::modCheck(DIR_SYSTEM . 'engine/loader.php'));
+require_once(VQMod::modCheck(DIR_SYSTEM . 'engine/registry.php'));
+require_once(VQMod::modCheck(DIR_SYSTEM . 'library/config.php'));
+require_once(VQMod::modCheck(DIR_SYSTEM . 'library/db.php'));
+require_once(VQMod::modCheck(DIR_SYSTEM . 'library/language.php'));
+
 
 // Registry
 $registry = new Registry();

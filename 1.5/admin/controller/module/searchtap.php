@@ -2,31 +2,37 @@
 
 class ControllerModuleSearchtap extends Controller
 {
-    private $collectionName = "opencart";
-    private $adminKey = "0adfda8085e3071661432ec558bf6a4424b4de491a763314504c760b5eb6fc38a7f103621f11068fdbef63d7b8387ef59e8a20f8d6fa50fd51c970aa3e8fac5a81e66c2f3b1636fb7f3d463224d115802ced3a6556b0a6853b059c7fb0e8f9f9c416d83df19ed24d57ebfd95a827e99384dfa240aac310997a4bd540297eb368";
-    //private $adminKey = "1dc07d4543b4849669dd3cc585a940fd308d67bd28950359a176a9127f71344b056c1a2e420135e9fdd4a87fd02acc8c52df337f05a8eaafd056e9c575c847403b447958e458edec1038e15999bf90db399501ed12ce634ce3213293d6317582192c2dd70d6d07b172a7ec24abbc0ced76d404a46c3db50478c5e11c1fd54da5";
+    private $collectionName;
+    private $adminKey;
     public $category_array = [];
     protected $log;
 
-    public function install() {
+    public function install()
+    {
 
     }
 
     private $error = array(); // This is used to set the errors, if any.
 
-    public function index() {   // Default function
+    public function index()
+    {
         $this->language->load('module/searchtap'); // Loading the language file of helloworld
 
         $this->document->setTitle($this->language->get('heading_title')); // Set the title of the page to the heading title in the Language file i.e., Hello World
 
         $this->load->model('setting/setting'); // Load the Setting Model  (All of the OpenCart Module & General Settings are saved using this Model )
 
+        if (($this->request->server['REQUEST_METHOD'] == 'POST') && (isset($_POST['reindex']))) {
+            $this->cronJob();
 
+            $this->session->data['success'] = $this->language->get('reindex_success'); // To display the success text on data save
+
+            $this->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL')); // Redirect to the Module Listing
+        }
 
         if (($this->request->server['REQUEST_METHOD'] == 'POST')) { // Start If: Validates and check if data is coming by save (POST) method
             $this->model_setting_setting->editSetting('searchtap', $this->request->post);      // Parse all the coming data to Setting Model to save it in database.
 
-            var_dump($this->request->post);
             $this->session->data['success'] = $this->language->get('text_success'); // To display the success text on data save
 
             $this->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL')); // Redirect to the Module Listing
@@ -38,19 +44,6 @@ class ControllerModuleSearchtap extends Controller
         $this->data['collection_name'] = $this->language->get('collection_name');
         $this->data['admin_key'] = $this->language->get('admin_key');
         $this->data['search_key'] = $this->language->get('search_key');
-
-//        $this->data['text_enabled'] = $this->language->get('text_enabled');
-//        $this->data['text_disabled'] = $this->language->get('text_disabled');
-//        $this->data['text_content_top'] = $this->language->get('text_content_top');
-//        $this->data['text_content_bottom'] = $this->language->get('text_content_bottom');
-//        $this->data['text_column_left'] = $this->language->get('text_column_left');
-//        $this->data['text_column_right'] = $this->language->get('text_column_right');
-
-//        $this->data['entry_code'] = $this->language->get('entry_code');
-//        $this->data['entry_layout'] = $this->language->get('entry_layout');
-//        $this->data['entry_position'] = $this->language->get('entry_position');
-//        $this->data['entry_status'] = $this->language->get('entry_status');
-//        $this->data['entry_sort_order'] = $this->language->get('entry_sort_order');
 
         $this->data['button_save'] = $this->language->get('button_save');
         $this->data['button_cancel'] = $this->language->get('button_cancel');
@@ -79,20 +72,20 @@ class ControllerModuleSearchtap extends Controller
         $this->data['breadcrumbs'] = array();
 
         $this->data['breadcrumbs'][] = array(
-            'text'      => $this->language->get('text_home'),
-            'href'      => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'text' => $this->language->get('text_home'),
+            'href' => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
             'separator' => false
         );
 
         $this->data['breadcrumbs'][] = array(
-            'text'      => $this->language->get('text_module'),
-            'href'      => $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'),
+            'text' => $this->language->get('text_module'),
+            'href' => $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'),
             'separator' => ' :: '
         );
 
         $this->data['breadcrumbs'][] = array(
-            'text'      => $this->language->get('heading_title'),
-            'href'      => $this->url->link('module/searchtap', 'token=' . $this->session->data['token'], 'SSL'),
+            'text' => $this->language->get('heading_title'),
+            'href' => $this->url->link('module/searchtap', 'token=' . $this->session->data['token'], 'SSL'),
             'separator' => ' :: '
         );
 
@@ -145,10 +138,20 @@ class ControllerModuleSearchtap extends Controller
         $this->response->setOutput($this->render()); // Rendering the Output
     }
 
-    public function validate() {}
+    public function validate()
+    {
+    }
+
+    public function getCollection()
+    {
+        $this->collectionName = $this->config->get('st_collection');
+        $this->adminKey = $this->config->get('st_admin_key');
+    }
 
     public function cronJob()
     {
+
+        $this->getCollection();
         $this->log = new Log('searchtap.log');
 
         $this->load->model('catalog/product');
@@ -242,11 +245,11 @@ class ControllerModuleSearchtap extends Controller
         $manufacturer = "";
 
         $manufacturerArray = $this->model_catalog_manufacturer->getManufacturer($product["manufacturer_id"]);
-        if($manufacturerArray)
+        if ($manufacturerArray)
             $manufacturer = $manufacturerArray["name"];
 
         //get product price with tax
-        $priceWithTax = $this->tax->calculate($product["price"], $product["tax_class_id"], $this->config->get('config_tax'));
+//        $priceWithTax = $this->tax->calculate($product["price"], $product["tax_class_id"], $this->config->get('config_tax'));
 
         //get product special price
         $specialPrice = $this->model_catalog_product->getProductSpecials($productId);
@@ -273,11 +276,11 @@ class ControllerModuleSearchtap extends Controller
             $discountedPrices["discounted_price_" . $currency["code"]] = round($discounted_price * $currency["value"], 2);
         }
 
-        //get product tags
-        $productTags = $this->model_catalog_product->getProductTags($productId);
-        foreach ($productTags as $tag) {
-            $tags = explode(",", $tag);
-        }
+//        get product tags
+//        $productTags = $this->model_catalog_product->getProductTags($productId);
+//        foreach ($productTags as $tag) {
+//            $tags = explode(",", $tag);
+//        }
 
         //get product images
         $images[0] = $product["image"];
@@ -302,7 +305,7 @@ class ControllerModuleSearchtap extends Controller
         foreach ($categoryId as $id) {
             //check whether category is enabled or not
             $cat_status = $this->model_catalog_category->getCategory($id)["status"];
-            if(!$cat_status)
+            if (!$cat_status)
                 continue;
 
             $flag = true;
@@ -342,16 +345,34 @@ class ControllerModuleSearchtap extends Controller
         //get custom attributes
         $attributes = $this->model_catalog_product->getProductAttributes($productId);
         foreach ($attributes as $attr) {
-            $productAttributes[$attr["name"]] = $attr["product_attribute_description"][1]["text"];
+            if (isset($attr["name"]))
+                $productAttributes[$attr["name"]] = $attr["product_attribute_description"][1]["text"];
         }
 
         //get product options
-        $options = $this->model_catalog_product->getProductOptions($productId);
+        $options = $this->model_gs_searchtap->getProductOptions($productId);
         foreach ($options as $opt) {
-            if (isset($opt["product_option_value"]))
-                foreach ($opt["product_option_value"] as $value) {
-                    $optValue[] = $value["name"];
+
+            $variations = [];
+            $childCount = 0;
+
+            if (isset($opt["option_value"]))
+                foreach ($opt["option_value"] as $value) {
+
+                    $temp = [
+                        "price" => (float)$value["price"],
+                        "value" => $value["name"],
+                        "quantity" => (int)$value["quantity"]
+                    ];
+
+                    $variations[$childCount] = $temp;
+                    $childCount++;
                 }
+
+            $optValue = [
+                "image" => $opt["image"],
+                "variations" => $variations
+            ];
             $productOptions[$opt["name"]] = isset($optValue) ? $optValue : [];
         }
 
@@ -368,7 +389,7 @@ class ControllerModuleSearchtap extends Controller
             "id" => (int)$productId,
             "sku" => $product["sku"],
             "model" => $product["model"],
-            "price" => (float)$priceWithTax,
+            "price" => (float)$product["price"],
             "status" => (int)$product["status"],
             "created_at" => strtotime($product["date_added"]),
             "stock_qty" => (int)$product["quantity"],
@@ -378,14 +399,16 @@ class ControllerModuleSearchtap extends Controller
             "description" => strip_tags(htmlspecialchars_decode($description[1]["description"])),
             "manufacturer" => $manufacturer,
             "images" => $images,
-            "tags" => array_unique($tags),
+            "tags" => array_unique(explode(",", $product["tag"])),
             "_categories" => $categoryLastLevel,
             "discounted_price" => $discounted_price,
             "category_path" => $pathArray,
-            'url' => $productURL
+            'url' => $productURL,
+            'options' => $productOptions,
+            'type' => $product['type']
         ];
 
-        return array_merge($product_array, $productAttributes, $productOptions, $prices, $discountedPrices, $_category_level);
+        return array_merge($product_array, $productAttributes, $prices, $discountedPrices, $_category_level);
     }
 
     public function searchtapCurlRequest($product_json)

@@ -39,6 +39,10 @@
                             <span class="error"><?php echo $error_code; ?></span>
                             <?php } ?></td>
                     </tr>
+
+                    <tr>
+                        <td class="left"><input type="submit" name="reindex" value="Reindex"></td>
+                    </tr>
                 </table>
             </form>
         </div>
