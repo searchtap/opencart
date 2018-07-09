@@ -385,6 +385,10 @@ class ControllerModuleSearchtap extends Controller
         }
         $productURL = htmlspecialchars_decode($url->link('product/product', 'product_id=' . $product["product_id"]));
 
+
+        //get Artist
+        $artist = $this->model_gs_searchtap->getArtist($productId)["artist_name"];
+
         $product_array = [
             "id" => (int)$productId,
             "sku" => $product["sku"],
@@ -405,7 +409,8 @@ class ControllerModuleSearchtap extends Controller
             "category_path" => $pathArray,
             'url' => $productURL,
             'options' => $productOptions,
-            'type' => $product['type']
+            'type' => $product['type'],
+            'artist' => $artist
         ];
 
         return array_merge($product_array, $productAttributes, $prices, $discountedPrices, $_category_level);

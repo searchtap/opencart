@@ -67,4 +67,11 @@ class ModelGsSearchtap extends Model {
         }
         return $product_option_data;
     }
+
+    public function getArtist($product_id)
+    {
+        $query = $this->db->query("SELECT concat(oc.firstname,' ',oc.lastname) as artist_name, oc.profile_name FROM " . DB_PREFIX . "customer oc where  oc.customer_id = (SELECT p2a.artist_id FROM " . DB_PREFIX . "product_to_artist p2a WHERE p2a.product_id = '" . (int) $product_id . "') and oc.status >'0'");
+        return $query->row;
+    }
+
 }
