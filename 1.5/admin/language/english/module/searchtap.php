@@ -8,6 +8,9 @@ $_['text_edit'] = 'Edit';
 
 // Entry
 $_['entry_status'] = 'Status';
+$_['collection_name'] = 'Enter collection name';
+$_['admin_key'] = 'Enter admin key';
+$_['search_key'] = 'Enter search key';
 
 // Error
 $_['error_permission'] = 'Warning: You do not have permission to modify SearchTap module!';
