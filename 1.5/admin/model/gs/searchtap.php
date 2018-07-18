@@ -74,4 +74,9 @@ class ModelGsSearchtap extends Model {
         return $query->row;
     }
 
+    public function getStyles($ids) {
+        $query = $this->db->query("select * from " . DB_PREFIX . "tag where tag_id in ('" . $ids ."')");
+        return $query->rows;
+    }
+
 }

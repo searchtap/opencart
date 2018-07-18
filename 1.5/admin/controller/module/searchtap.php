@@ -241,6 +241,16 @@ class ControllerModuleSearchtap extends Controller
         //get product name, description and meta-keyword
         $description = $this->model_catalog_product->getProductDescriptions($productId);
 
+       //get product styles for filter
+
+       $styles = [];
+       $style_ids = explode(",", $description[1]["style"]);
+       if(count($style_ids) > 0)
+       foreach($style_ids as $id) {
+            $styles[] = $this->model_gs_searchtap->getStyles($id)[0]["name"];
+        }
+
+
         //get manufacturer name
         $manufacturer = "";
 
@@ -410,7 +420,8 @@ class ControllerModuleSearchtap extends Controller
             'url' => $productURL,
             'options' => $productOptions,
             'type' => $product['type'],
-            'artist' => $artist
+            'artist' => $artist,
+            'styles' => $styles
         ];
 
         return array_merge($product_array, $productAttributes, $prices, $discountedPrices, $_category_level);
