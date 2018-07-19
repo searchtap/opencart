@@ -247,9 +247,10 @@ class ControllerModuleSearchtap extends Controller
        $style_ids = explode(",", $description[1]["style"]);
        if(count($style_ids) > 0)
        foreach($style_ids as $id) {
-            $styles[] = $this->model_gs_searchtap->getStyles($id)[0]["name"];
+            $stylesArray = $this->model_gs_searchtap->getStyles($id);
+            if(isset($stylesArray[0]))
+                $styles[] = $stylesArray[0]["name"];
         }
-
 
         //get manufacturer name
         $manufacturer = "";
@@ -361,17 +362,43 @@ class ControllerModuleSearchtap extends Controller
 
         //get product options
         $options = $this->model_gs_searchtap->getProductOptions($productId);
+        $color = [];
+        foreach($options as $opt) {
+            if($opt["name"] == "Frame type") {
+
+            if (isset($opt["option_value"])) {
+
+             foreach ($opt["option_value"] as $value) {
+                        $color[] = $value["name"];
+                 }
+            }
+            }
+        }
+
         foreach ($options as $opt) {
 
             $variations = [];
             $childCount = 0;
 
+            if($opt["name"] != "Frame type") {
             if (isset($opt["option_value"]))
                 foreach ($opt["option_value"] as $value) {
 
+                    $val = "";
+                    if(strtolower($value["name"]) == "small")
+                        $val = "S";
+                    else if(strtolower($value["name"]) == "medium")
+                        $val = "M";
+                    else if(strtolower($value["name"]) == "large")
+                        $val = "L";
+                    else if(strtolower($value["name"]) == "extra large")
+                        $val = "XL";
+                    else
+                        $val = $value["name"];
+
                     $temp = [
                         "price" => (float)$value["price"],
-                        "value" => $value["name"],
+                        "value" => $val,
                         "quantity" => (int)$value["quantity"]
                     ];
 
@@ -381,9 +408,15 @@ class ControllerModuleSearchtap extends Controller
 
             $optValue = [
                 "image" => $opt["image"],
-                "variations" => $variations
+                "variations" => $variations,
+                "type" => $opt["name"]
             ];
-            $productOptions[$opt["name"]] = isset($optValue) ? $optValue : [];
+
+            if($opt["name"] == "Framed" || $opt["name"] == "Canvas Frame")
+                $optValue["color"] = $color;
+
+            $productOptions[] = isset($optValue) ? $optValue : [];
+            }
         }
 
         //get product URL
@@ -397,7 +430,11 @@ class ControllerModuleSearchtap extends Controller
 
 
         //get Artist
-        $artist = $this->model_gs_searchtap->getArtist($productId)["artist_name"];
+
+        $artist = "";
+        $artistArray = $this->model_gs_searchtap->getArtist($productId);
+        if(isset($artistArray["artist_name"]))
+            $artist = $artistArray["artist_name"];
 
         $product_array = [
             "id" => (int)$productId,
