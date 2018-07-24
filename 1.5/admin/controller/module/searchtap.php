@@ -249,7 +249,7 @@ class ControllerModuleSearchtap extends Controller
        foreach($style_ids as $id) {
             $stylesArray = $this->model_gs_searchtap->getStyles($id);
             if(isset($stylesArray[0]))
-                $styles[] = $stylesArray[0]["name"];
+                $styles[] = trim($stylesArray[0]["name"]);
         }
 
         //get manufacturer name
@@ -369,7 +369,11 @@ class ControllerModuleSearchtap extends Controller
             if (isset($opt["option_value"])) {
 
              foreach ($opt["option_value"] as $value) {
-                        $color[] = $value["name"];
+                        $opt = [
+                            "value" => $value["name"],
+                            "id" => $value["product_option_value_id"]
+                        ];
+                        $color[] = isset($opt) ? $opt : [];
                  }
             }
             }
@@ -399,7 +403,8 @@ class ControllerModuleSearchtap extends Controller
                     $temp = [
                         "price" => (float)$value["price"],
                         "value" => $val,
-                        "quantity" => (int)$value["quantity"]
+                        "quantity" => (int)$value["quantity"],
+                        "id" => $value["product_option_value_id"]
                     ];
 
                     $variations[$childCount] = $temp;
@@ -409,7 +414,8 @@ class ControllerModuleSearchtap extends Controller
             $optValue = [
                 "image" => $opt["image"],
                 "variations" => $variations,
-                "type" => $opt["name"]
+                "type" => $opt["name"],
+                "id" => $opt["option_id"]
             ];
 
             if($opt["name"] == "Framed" || $opt["name"] == "Canvas Frame")
@@ -457,7 +463,7 @@ class ControllerModuleSearchtap extends Controller
             'url' => $productURL,
             'options' => $productOptions,
             'type' => $product['type'],
-            'artist' => $artist,
+            'artist' => trim($artist),
             'styles' => $styles
         ];
 
