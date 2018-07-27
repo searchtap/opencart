@@ -237,6 +237,8 @@ class ControllerModuleSearchtap extends Controller
         $productOptions = [];
         $prices = [];
         $discountedPrices = [];
+        $_size = [];
+        $_price = [];
 
         //get product name, description and meta-keyword
         $description = $this->model_catalog_product->getProductDescriptions($productId);
@@ -407,6 +409,9 @@ class ControllerModuleSearchtap extends Controller
                         "id" => $value["product_option_value_id"]
                     ];
 
+                    $_price[] = (float)$value["price"];
+                    $_size[] = $val;
+
                     $variations[$childCount] = $temp;
                     $childCount++;
                 }
@@ -464,7 +469,9 @@ class ControllerModuleSearchtap extends Controller
             'options' => $productOptions,
             'type' => $product['type'],
             'artist' => trim($artist),
-            'styles' => $styles
+            'styles' => $styles,
+            '_size' => array_unique($_size),
+            '_price' => array_unique($_price)
         ];
 
         return array_merge($product_array, $productAttributes, $prices, $discountedPrices, $_category_level);
