@@ -243,16 +243,16 @@ class ControllerModuleSearchtap extends Controller
         //get product name, description and meta-keyword
         $description = $this->model_catalog_product->getProductDescriptions($productId);
 
-       //get product styles for filter
+        //get product styles for filter
 
-       $styles = [];
-       $style_ids = explode(",", $description[1]["style"]);
-       if(count($style_ids) > 0)
-       foreach($style_ids as $id) {
-            $stylesArray = $this->model_gs_searchtap->getStyles($id);
-            if(isset($stylesArray[0]))
-                $styles[] = trim($stylesArray[0]["name"]);
-        }
+        $styles = [];
+        $style_ids = explode(",", $description[1]["style"]);
+        if (count($style_ids) > 0)
+            foreach ($style_ids as $id) {
+                $stylesArray = $this->model_gs_searchtap->getStyles($id);
+                if (isset($stylesArray[0]))
+                    $styles[] = trim($stylesArray[0]["name"]);
+            }
 
         //get manufacturer name
         $manufacturer = "";
@@ -362,22 +362,26 @@ class ControllerModuleSearchtap extends Controller
                 $productAttributes[$attr["name"]] = $attr["product_attribute_description"][1]["text"];
         }
 
+        $color_option_id = "";
+
         //get product options
         $options = $this->model_gs_searchtap->getProductOptions($productId);
         $color = [];
-        foreach($options as $opt) {
-            if($opt["name"] == "Frame type") {
+        foreach ($options as $opt) {
+            if ($opt["name"] == "Frame type") {
 
-            if (isset($opt["option_value"])) {
+                if (isset($opt["option_value"])) {
 
-             foreach ($opt["option_value"] as $value) {
-                        $opt = [
+                    foreach ($opt["option_value"] as $value) {
+                        $optVal = [
                             "value" => $value["name"],
                             "id" => $value["product_option_value_id"]
                         ];
-                        $color[] = isset($opt) ? $opt : [];
-                 }
-            }
+                        $color[] = isset($optVal) ? $optVal : [];
+                    }
+
+                    $color_option_id = $opt["product_option_id"];
+                }
             }
         }
 
@@ -386,47 +390,49 @@ class ControllerModuleSearchtap extends Controller
             $variations = [];
             $childCount = 0;
 
-            if($opt["name"] != "Frame type") {
-            if (isset($opt["option_value"]))
-                foreach ($opt["option_value"] as $value) {
+            if ($opt["name"] != "Frame type") {
+                if (isset($opt["option_value"]))
+                    foreach ($opt["option_value"] as $value) {
 
-                    $val = "";
-                    if(strtolower($value["name"]) == "small")
-                        $val = "S";
-                    else if(strtolower($value["name"]) == "medium")
-                        $val = "M";
-                    else if(strtolower($value["name"]) == "large")
-                        $val = "L";
-                    else if(strtolower($value["name"]) == "extra large")
-                        $val = "XL";
-                    else
-                        $val = $value["name"];
+                        $val = "";
+                        if (strtolower($value["name"]) == "small")
+                            $val = "S";
+                        else if (strtolower($value["name"]) == "medium")
+                            $val = "M";
+                        else if (strtolower($value["name"]) == "large")
+                            $val = "L";
+                        else if (strtolower($value["name"]) == "extra large")
+                            $val = "XL";
+                        else
+                            $val = $value["name"];
 
-                    $temp = [
-                        "price" => (float)$value["price"],
-                        "value" => $val,
-                        "quantity" => (int)$value["quantity"],
-                        "id" => $value["product_option_value_id"]
-                    ];
+                        $temp = [
+                            "price" => (float)$value["price"],
+                            "value" => $val,
+                            "quantity" => (int)$value["quantity"],
+                            "id" => $value["product_option_value_id"]
+                        ];
 
-                    $_price[] = (float)$value["price"];
-                    $_size[] = $val;
+                        $_price[] = (float)$value["price"];
+                        $_size[] = $val;
 
-                    $variations[$childCount] = $temp;
-                    $childCount++;
-                }
+                        $variations[$childCount] = $temp;
+                        $childCount++;
+                    }
 
-            $optValue = [
-                "image" => $opt["image"],
-                "variations" => $variations,
-                "type" => $opt["name"],
-                "id" => $opt["option_id"]
-            ];
+                $optValue = [
+                    "image" => $opt["image"],
+                    "variations" => $variations,
+                    "type" => $opt["name"],
+                    "id" => $opt["option_id"],
+                    "size_option_id" => $opt["product_option_id"],
+                    "color_option_id" => $color_option_id
+                ];
 
-            if($opt["name"] == "Framed" || $opt["name"] == "Canvas Frame")
-                $optValue["color"] = $color;
+                if ($opt["name"] == "Framed" || $opt["name"] == "Canvas Frame")
+                    $optValue["color"] = $color;
 
-            $productOptions[] = isset($optValue) ? $optValue : [];
+                $productOptions[] = isset($optValue) ? $optValue : [];
             }
         }
 
@@ -444,7 +450,7 @@ class ControllerModuleSearchtap extends Controller
 
         $artist = "";
         $artistArray = $this->model_gs_searchtap->getArtist($productId);
-        if(isset($artistArray["artist_name"]))
+        if (isset($artistArray["artist_name"]))
             $artist = $artistArray["artist_name"];
 
         $product_array = [
