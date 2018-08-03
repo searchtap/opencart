@@ -305,7 +305,7 @@ class ControllerModuleSearchtap extends Controller
 
         //get product categories
         $categoryId = [];
-        $categories = $this->model_catalog_product->getProductCategories($productId);
+            $categories = $this->model_catalog_product->getProductCategories($productId);
 
         foreach ($categories as $catId) {
             $categoryId[] = $catId;
@@ -414,7 +414,8 @@ class ControllerModuleSearchtap extends Controller
                         ];
 
                         $_price[] = (float)$value["price"];
-                        $_size[] = $val;
+                        if($value["quantity"] > 0)
+                            $_size[] = $val;
 
                         $variations[$childCount] = $temp;
                         $childCount++;
