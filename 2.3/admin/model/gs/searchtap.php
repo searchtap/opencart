@@ -41,6 +41,11 @@ class ModelGsSearchtap extends Model {
         }
     }
 
+    public function getProductsCount () {
+        $sql = $this->db->query("select count(*) as total from gs_searchtap");
+        return $sql->rows;
+    }
+
     public function getProducts($limit) {
         $sql = $this->db->query("select * from gs_searchtap limit $limit");
         return $sql->rows;

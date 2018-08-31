@@ -188,21 +188,33 @@ class ControllerExtensionModuleSearchtap extends Controller
         $delete_product = [];
         $productStep = 1000;
 
-        $products = $this->model_gs_searchtap->getProducts($productStep);
+        $productCount = (int)$this->model_gs_searchtap->getProductsCount()[0]["total"];
 
-        foreach ($products as $product) {
-            if($product["status"] === "index" && ($product["last_indexed_at"] == null || $product["last_updated_at"] > $product["last_indexed_at"]))
-                $product_array[] = $this->productJSON($this->model_catalog_product->getProduct($product["product_id"]));
-            else if($product["status"] === "delete" && ($product["last_indexed_at"] == null || $product["last_updated_at"] > $product["last_indexed_at"]))
-                $delete_product[] = $product["product_id"];
+        $this->log->write('Total products in the table that need to be indexed = ' . $productCount);
+
+        for($i = 0; $i < $productCount; $i += $productStep) {
+
+            $products = $this->model_gs_searchtap->getProducts($productStep);
+
+            foreach ($products as $product) {
+                if ($product["status"] === "index" && ($product["last_indexed_at"] == null || $product["last_updated_at"] > $product["last_indexed_at"]))
+                    $product_array[] = $this->productJSON($this->model_catalog_product->getProduct($product["product_id"]));
+                else if ($product["status"] === "delete" && ($product["last_indexed_at"] == null || $product["last_updated_at"] > $product["last_indexed_at"]))
+                    $delete_product[] = $product["product_id"];
+            }
+
+            if ($product_array)
+                $this->searchtapCurlRequest(json_encode($product_array));
+            if ($delete_product)
+                $this->searchtapCurlDeleteRequest($delete_product);
+
+            $this->model_gs_searchtap->deleteProducts($productStep);
+
+            $this->log->write('Processed 1000 products');
         }
 
-        if($product_array)
-            $this->searchtapCurlRequest(json_encode($product_array));
-        if($delete_product)
-            $this->searchtapCurlDeleteRequest($delete_product);
+        $this->log->write('Indexing completed !!');
 
-        $this->model_gs_searchtap->deleteProducts($productStep);
     }
 
     public function productJSON($product)
@@ -219,8 +231,8 @@ class ControllerExtensionModuleSearchtap extends Controller
         //get product URL
         $url = new Url(HTTP_CATALOG, $this->config->get('config_secure') ? HTTP_CATALOG : HTTPS_CATALOG);
         if ($this->config->get('config_seo_url')) {
-            require_once('../catalog/controller/common/seo_url.php');
-            $rewriter = new ControllerCommonSeoUrl($this->registry);
+            require_once('../catalog/controller/startup/seo_url.php');
+            $rewriter = new ControllerStartupSeoUrl($this->registry);
             $url->addRewrite($rewriter);
         }
         $productURL = htmlspecialchars_decode($url->link('product/product', 'product_id=' . $product["product_id"]));
@@ -264,7 +276,7 @@ class ControllerExtensionModuleSearchtap extends Controller
         }
 
         //get product tags
-        $tags = $description[1]["tag"] ? array_unique(explode(",", $description[1]["tag"])) : [];
+        $tags = $description[1]["tag"] ? array_map('trim', array_unique(explode(",", $description[1]["tag"]))) : [];
 
         //get product images
         $images[0] = $product["image"];
@@ -280,15 +292,18 @@ class ControllerExtensionModuleSearchtap extends Controller
 
         foreach ($categories as $catId) {
             $categoryId[] = $catId;
-            $categoryLastLevel[] = htmlspecialchars_decode($this->model_catalog_category->getCategoryDescriptions($catId)[1]["name"]);
+            $catName = htmlspecialchars_decode($this->model_catalog_category->getCategoryDescriptions($catId)[1]["name"]);
+            if($catName != "More")
+                $categoryLastLevel[] = $catName;
         }
 
         //get category mapping with their parent category
         $pathArray = [];
         $_category_level = [];
+
         foreach ($categoryId as $id) {
             //check whether category is enabled or not
-            $cat_status = $this->model_catalog_category->getCategory($id)["status"];
+            $cat_status =  $this->model_catalog_category->getCategory($id)["status"];
             if (!$cat_status)
                 continue;
 
@@ -298,9 +313,9 @@ class ControllerExtensionModuleSearchtap extends Controller
             while ($flag) {
                 foreach ($this->category_array as $cat) {
                     if ($cat["category_id"] == $parentId) {
-                        if ($path == "")
+                        if ($path == "" && htmlspecialchars_decode($cat["name"]) != "More")
                             $path = htmlspecialchars_decode($cat["name"]);
-                        else
+                        else if(htmlspecialchars_decode($cat["name"]) != "More")
                             $path = htmlspecialchars_decode($cat["name"]) . "|||" . $path;
 
                         $parentId = $cat["parent_id"];
@@ -310,7 +325,8 @@ class ControllerExtensionModuleSearchtap extends Controller
                     $flag = false;
                 }
             }
-            $pathArray[] = $path;
+            if($path != "")
+                $pathArray[] = $path;
         }
 
         foreach ($pathArray as $path) {
@@ -360,7 +376,8 @@ class ControllerExtensionModuleSearchtap extends Controller
             "_categories" => $categoryLastLevel,
             "discounted_price" => $discounted_price,
             "category_path" => $pathArray,
-            'url' => $productURL
+            'url' => $productURL,
+            'viewed' => (int)$product["viewed"]
         ];
 
         //return $product_array;
