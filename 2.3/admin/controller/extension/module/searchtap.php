@@ -197,9 +197,9 @@ class ControllerExtensionModuleSearchtap extends Controller
             $products = $this->model_gs_searchtap->getProducts($productStep);
 
             foreach ($products as $product) {
-                if ($product["status"] === "index" && ($product["last_indexed_at"] == null || $product["last_updated_at"] > $product["last_indexed_at"]))
+                if ($product["status"] === "index")
                     $product_array[] = $this->productJSON($this->model_catalog_product->getProduct($product["product_id"]));
-                else if ($product["status"] === "delete" && ($product["last_indexed_at"] == null || $product["last_updated_at"] > $product["last_indexed_at"]))
+                else if ($product["status"] === "delete")
                     $delete_product[] = $product["product_id"];
             }
 
@@ -214,7 +214,6 @@ class ControllerExtensionModuleSearchtap extends Controller
         }
 
         $this->log->write('Indexing completed !!');
-
     }
 
     public function productJSON($product)
