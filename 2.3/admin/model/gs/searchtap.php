@@ -37,7 +37,7 @@ class ModelGsSearchtap extends Model {
             $sql = $this->db->query("update gs_searchtap set status='".$status."' where product_id=".$productId);
         }
         else {
-            $sql = $this->db->query("insert into gs_searchtap(product_id, status) values($productId,$status)");
+            $sql = $this->db->query("insert into gs_searchtap(product_id, status) values($productId, '".$status ."')");
         }
     }
 
